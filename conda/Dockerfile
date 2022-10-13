@@ -10,6 +10,15 @@ RUN apt-get update -y; apt-get upgrade -y; \
 
 COPY environment.yml environment.yml
 RUN conda env create -f environment.yml
+
+RUN R -e "install.packages(pkgs=c('colocr', 'qpcR'), repos='https://cran.rstudio.com/')"
+
+RUN R -e "if(!require(shinysense)){ devtools::install_github("Aciole-David/shinysense") #library(shinysense) }"
+
+RUN R -e "if(!require(r2d3)){ devtools::install_github("rstudio/r2d3") library(r2d3) }"
+
+CMD ["R", "-e", "shiny::runApp('/root/app', host='0.0.0.0', port=3838)"]
+
 RUN echo "alias l='ls -lah'" >> ~/.bashrc
 
 # This is the conda magic. If you are running through a shell just activating the environment in your profile is peachy
