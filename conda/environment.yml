@@ -1,0 +1,17 @@
+name: r-shiny
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - r-devtools
+  - r-shiny
+  - shinybs
+  - r-imager
+  - r-dplyr
+  - r-devtools
+  - r-shinyscreenshot
+  - r-tidyverse
+  - r-shinyjs
+  - r-xfun
+  - r-r2d3
