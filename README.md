@@ -39,3 +39,25 @@ install.packages('dplyr')
 install.packages('qpcR')
 #libGLU.so.1
 #sudo apt-get install libglu1-mesa
+
+###############
+new dependencies to R install:
+
+library(devtools)
+
+if(!require(shinysense)){
+  devtools::install_github("Aciole-David/shinysense")
+  #library(shinysense)
+}
+
+library(shinyscreenshot)
+library(tidyverse)
+library(shinyjs)
+if(!require(r2d3)){
+  devtools::install_github("rstudio/r2d3")
+  library(r2d3)
+}
+library(xfun)
+
+
+
