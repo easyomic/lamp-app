@@ -15,10 +15,6 @@ RUN R -e "install.packages(pkgs=c('colocr', 'qpcR'), repos='https://cran.rstudio
 
 RUN R -e "if(!require(shinysense)){ devtools::install_github("Aciole-David/shinysense") #library(shinysense) }"
 
-RUN R -e "if(!require(r2d3)){ devtools::install_github("rstudio/r2d3") library(r2d3) }"
-
-CMD ["R", "-e", "shiny::runApp('/root/app', host='0.0.0.0', port=3838)"]
-
 RUN echo "alias l='ls -lah'" >> ~/.bashrc
 
 # This is the conda magic. If you are running through a shell just activating the environment in your profile is peachy
@@ -40,6 +36,3 @@ ENV PATH /opt/conda/envs/r-shiny/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/b
 
 # This is how we install custom R packages
 # RUN R -e "install.packages('devtools', repos = 'http://cran.us.r-project.org')"
-
-# Copy our app.R (or the entire project)
-COPY app.R ./
