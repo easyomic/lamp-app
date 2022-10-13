@@ -6,7 +6,7 @@ dependencies:
   - python=3.6
   - r-devtools
   - r-shiny
-  - shinybs
+  - r-shinybs
   - r-imager
   - r-dplyr
   - r-devtools
