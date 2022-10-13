@@ -51,12 +51,16 @@ if(!require(shinysense)){
 }
 
 library(shinyscreenshot)
+
 library(tidyverse)
+
 library(shinyjs)
+
 if(!require(r2d3)){
   devtools::install_github("rstudio/r2d3")
   library(r2d3)
 }
+
 library(xfun)
 
 
