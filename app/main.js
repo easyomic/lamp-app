@@ -11,7 +11,7 @@ const image_size = Object.assign({width: 300, height: 300}, output_size);
 
 const shutter_text = {
   taking: 'Sending photo...',
-  ready: 'MODDEDnowStart capture',
+  ready: 'Start capture',
 };
 
 const no_camera_message = "Shiny can't get access to cameras. This is a privacy consideration. Make sure you are trying from a secure (https, or localhost) site.";
@@ -156,10 +156,10 @@ attach_camera_stream();
 // ================================================================
 shutter.on('click', function(){
 
-var i = 1, NumeroDeCapturas = 10, IntervaloDeCaptura = 3000; //loop n times after click
+var i = 1, NumeroDeCapturas = 5, IntervaloDeCaptura = 1000; //loop n times after click
 
 function f() { //generic function call to start the loop
-  console.log("Capture #"+i); //print number of capture each iteration
+  
 
   if(is_shiny_app){
     shutter.text(i);
@@ -177,16 +177,13 @@ function f() { //generic function call to start the loop
   if(is_shiny_app){
     Shiny.onInputChange(shiny_message_loc, photo_data);
   }
-	
-  if(is_shiny_app){
-    shutter.text(i);
-  }
-	
+	console.log("Capture #"+i);
 	
   i++; //iteration +1
   if (i <= NumeroDeCapturas) { //less or equal number of captures
     setTimeout(f, IntervaloDeCaptura); //
   }
+   //print number of capture each iteration
 }
 
 f();

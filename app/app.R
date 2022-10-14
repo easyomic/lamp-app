@@ -5,6 +5,7 @@ library(colocr)
 #library(dplyr)
 library(qpcR)
 
+source('source-function.R')
 source('img_func-MOD.R')
 source('qpcr_func.R')
 
@@ -24,12 +25,14 @@ if(!require(r2d3)){
 }
 library(xfun)
 
+library(shinylogs)
 
 # Define UI for application that draws a histogram
 ui <-  fluidPage(
+  use_tracking(),
   h3("EasyOmics qLAMP", span("", style = "font-weight: 300"),
   style = "color: #000000; text-align: center;background-color:#00AD87;padding: 10px"),
-  column(6,p("A tool for realtime colorimetric quantitative LAMP analysis from timelapse images of reaction chambers."),
+  column(6,p("Timelapse capture and realtime colorimetric quantitative LAMP analysis."),
          br()),
   ## Main
   fluidRow( ),
@@ -199,20 +202,20 @@ server <- function(input, output, session) {
   
 reset.default<-function() {  
     ##set parameters in main.js to default values
-    gsub_file(file=system.file("r2d3/viewr/main.js",package = "shinysense"),
+    gsub_file("main.js",
               "NumeroDeCapturas = .*,","NumeroDeCapturas = 5,")
-    gsub_file(file=system.file("r2d3/viewr/main.js",package = "shinysense"),
+    gsub_file("main.js",
               "IntervaloDeCaptura = .*;","IntervaloDeCaptura = 1000;")
     }
   
   ## update parameters when input change
-  reset.vars<-function(){
+reset.vars<-function(){
     num.cap=({input$NUMCAP})
-    gsub_file(file=system.file("r2d3/viewr/main.js",package = "shinysense"),
+    gsub_file("main.js",
               "NumeroDeCapturas = .*,",paste0("NumeroDeCapturas = ",num.cap,","))
     inte.cap.i=input$INTECAP #input interval
     inte.cap=inte.cap.i*1000 #multiply to get input in milisseconds
-    gsub_file(file=system.file("r2d3/viewr/main.js",package = "shinysense"),
+    gsub_file("main.js",
               "IntervaloDeCaptura = .*;",paste0("IntervaloDeCaptura = ",inte.cap,";"))
   }
   
@@ -221,8 +224,8 @@ reset.default<-function() {
   out <- eventReactive(input$setconfirm,{
     status("Values updated")
     reset.vars()
-    session$reload()
-    sprintf(paste0(input$NUMCAP, " captures ;",input$INTECAP," seconds delay"))
+    #session$reload()
+    sprintf(paste0(input$NUMCAP, " captures; ",input$INTECAP," seconds delay"))
     
   })
   
@@ -245,7 +248,7 @@ reset.default<-function() {
   #picture taken
   output$snapshot <- renderPlot({
     par(mar = c(0, 0, 0, 0))
-    plot(as.raster(myCamera()))
+    graphics::plot(x=as.raster(myCamera()))
     a=sprintf(format(Sys.time(), '%Y-%m-%d_%H-%M-%S'))
     
     ##save to user download folder
@@ -254,8 +257,8 @@ reset.default<-function() {
     
     ##save to server side folder
     screenshot(id = "snapshot", filename =
-                 paste("beromics-capture-",a, sep = ""),timer = .5,
-               server_dir = "./", download = F)
+                 paste("beromics-capture-",a, sep = ""),timer = 1,
+               server_dir = "./", download = T)
     
   })
   
@@ -265,7 +268,16 @@ reset.default<-function() {
      updateNumericInput(session, "INTECAP", value = 1)
    })
   
-  
+   ## SHINYLOGS
+   # Just take a look at what is generated
+   track_usage(what = "error",
+               storage_mode = store_json(path = "logs/"))
+   # track_usage(
+   #   storage_mode = store_custom(FUN = function(logs){
+   #     str(logs, max.level=3)
+   #   })
+   # )
+   
   }
 
 # Run the application
