@@ -9,6 +9,9 @@ RUN apt-get update -y; apt-get upgrade -y; \
 # COPY (Relative to project) (/root)
 
 COPY environment.yml environment.yml
+
+RUN source activate conda
+
 RUN conda env create -f environment.yml
 
 RUN R -e "install.packages(pkgs=c('colocr', 'qpcR'), repos='https://cran.rstudio.com/')"
