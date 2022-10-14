@@ -13,6 +13,7 @@ dependencies and stuff:
 #docker images
 
 #docker run -p 3838:3838 easyomics/shiny-lamp
+
 #docker run -it -p 3838:3838 --name shiny-lamp  easyomics/shiny-lamp /bin/bash
 
 #docker start shiny-lamp #if not running
@@ -66,5 +67,6 @@ library(xfun)
 #xdg-open
 #sudo apt-get install xdg-utils
 
-
+#after install finish:
+docker run --rm -p 3838:3838 easyomics/shiny-lamp
 
