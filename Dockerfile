@@ -14,6 +14,8 @@ RUN apt-get update \
 #try install devtools alone 
 RUN R -e "install.packages('devtools')"
 
+RUN R -e "install.packages('shinylogs')"
+
 RUN R -e "install.packages(pkgs=c('shinyBS','imager','colocr', 'dplyr', 'qpcR'), repos='https://cran.rstudio.com/')"
 
 #try simplify devtools install
