@@ -63,5 +63,8 @@ if(!require(r2d3)){
 
 library(xfun)
 
+#xdg-open
+#sudo apt-get install xdg-utils
+
 
 
