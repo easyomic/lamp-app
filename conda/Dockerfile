@@ -10,7 +10,7 @@ RUN apt-get update -y; apt-get upgrade -y; \
 
 COPY environment.yml environment.yml
 
-RUN source activate conda
+#RUN source activate conda
 
 RUN conda env create -f environment.yml
 
