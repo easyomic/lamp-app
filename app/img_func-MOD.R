@@ -246,6 +246,12 @@ roi_check.list <- function(img, ind = c(1,3)) {
 rlamp <- function(df,df2, standardcurve, dil2, thr_2, thr_01) {
   ml1 <- modlist(df, 1, 2:8, model = l7)
   plot1 <- plot(ml1, col = rep(1:7, each = 1))
+  ##add legend to sigmoid plot
+    legend("right",
+            legend =c('Amostras','NC', '#2', '#3', '#4', '#5', '#6', '#7'),
+            pch=16, pt.cex=1, cex=1, bty='n',
+            col = c('#FFFFFFFF', 'black','#df536b','#61d04f',
+                    '#2297e6', '#28e2e5', '#cd0bbc', '#f5c710'))
   ml2 <- modlist(df, 1, 3:8, model = l7)
   if (standardcurve == "Standard Calibration Curve"){
     c1 <- calib(ml2, thresh = "cpD2", predcurve = NULL, dil = dil2,
