@@ -11,7 +11,7 @@ const image_size = Object.assign({width: 300, height: 300}, output_size);
 
 const shutter_text = {
   taking: 'Sending photo...',
-  ready: 'Start capture',
+  ready: 'Ready',
 };
 
 const no_camera_message = "Shiny can't get access to cameras. This is a privacy consideration. Make sure you are trying from a secure (https, or localhost) site.";
@@ -29,16 +29,6 @@ div.st({
   alignItems: 'center',
 });
 
-const shutter = div.selectAppend('button')
-  .text(shutter_text.ready)
-  .st({
-    width: '80%',
-    height: '40px',
-    fontSize: '24px',
-    borderRadius: '8px',
-    fontFamily: system_font,
-  });
-
 const camera_chooser = div.selectAppend('select.camera_chooser')
   .style('display', 'none');
 
@@ -52,6 +42,7 @@ const no_camera_alert = div.selectAppend('p')
   });
 
 const video_element = div.selectAppend('video')
+  .attr('id','livevideo')
   .at({
     width: image_size.width,
     height: image_size.height,
@@ -61,20 +52,40 @@ const video_element = div.selectAppend('video')
   .st({
     width: `${image_size.width}px`,
     height:`${image_size.height}px`,
-    objectFit: 'cover',
+    //objectFit: 'cover',
+	objectFit: 'contain', //try reduce pixelization
     maxWidth: '100%',
-    maxHeight: '80%',
-    marginTop: '0.numcaprem',
+    maxHeight: '100%',
+	//transform: 'rotate(90deg)',
+    //marginTop: '0.5rem',
   }).node();
 
 const photo_holder = div.selectAppend('canvas.photo_holder')
+   .attr('id','photocanvas')
    .at(image_size)
    .st({
       width: `${image_size.width}px`,
       height:`${image_size.height}px`,
+	  objectFit: 'contain', //try reduce pixelization
+	  maxWidth: '100%',
+      maxHeight: '100%',
       display: 'none',
     })
     .node();
+
+//const myshadowRoot = document.getElementById('myCamera-shinyviewr').shadowRoot;
+//const mycanvas = myshadowRoot.getElementById('photocanvas');
+
+const shutter = div.selectAppend('text')
+  .attr('id','shutterbutton')
+  //.text(shutter_text.ready)
+  .st({
+    width: '99%',
+    height: '0px',
+	borderWidth: 'thin 1px',
+    //borderRadius: '8px',
+    fontFamily: system_font,
+  });
 
 // ================================================================
 // Camera hookup
@@ -96,7 +107,7 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
       if(available_cameras.length > 1){
         // Show chooser if we have more than one camera
         camera_chooser
-          .style('display', 'block')
+          .style('display', 'none')
           .selectAll('option')
           .data(available_cameras)
           .enter().append('option')
@@ -141,7 +152,14 @@ function attach_camera_stream(camera_id = null){
 
   // Setup new stream
   navigator.mediaDevices
-    .getUserMedia(request_constraints)
+    .getUserMedia(
+	  {video: {
+		  //width: 720,
+		  //height: 720,
+		  //focusMode: String. One of "none", "manual", "single-shot", or "continuous".
+		  focusMode: 'continuous',
+		  facingMode: 'environment'}}
+  )
     .then(new_stream => {
       video_element[is_new_browser ? 'srcObject': 'src'] = new_stream;
     });
@@ -156,38 +174,34 @@ attach_camera_stream();
 // ================================================================
 shutter.on('click', function(){
 
-var i = 1, NumeroDeCapturas = 5, IntervaloDeCaptura = 1000; //loop n times after click
-
-function f() { //generic function call to start the loop
-  
-
   if(is_shiny_app){
-    shutter.text(i);
+    //shutter.text(shutter_text.taking);
   }
 
+
   // Append a snapshot of video canvas element context
+
   photo_holder
     .getContext('2d')
-    .drawImage(video_element, 0, 0, image_size.width, image_size.height);
+    .drawImage(video_element, 0, 0, image_size.width, image_size.height)
+	
 
   // Grab photo data as a dataurl
-  const photo_data = photo_holder.toDataURL("image/png");
+  //const photo_data = photo_holder.toDataURLHD("image/png");
+  
+  const photo_data = photo_holder.toDataURL("image/svg");
+  //const photo_data = photo_holder.toDataURL("image/svg+xml");
+  //const photo_data = photo_holder.toDataURL("image/png");
+  
+  //const photo_data = photo_holder.toDataURL("image/jpg", 1.0);
+  //try get CONVERT Image url to Base64
+  //return dataURL.replace(/^data:image\/(png);base64,/, "");
+  //const photo_data = getBase64Image(document.getElementById("photo_holder"));
 
   // Send to shiny if needed.
   if(is_shiny_app){
     Shiny.onInputChange(shiny_message_loc, photo_data);
   }
-	console.log("Capture #"+i);
-	
-  i++; //iteration +1
-  if (i <= NumeroDeCapturas) { //less or equal number of captures
-    setTimeout(f, IntervaloDeCaptura); //
-  }
-   //print number of capture each iteration
-}
-
-f();
-
 });
 
 
@@ -198,6 +212,6 @@ if(is_shiny_app){
     shiny_ready_loc,
     message => {
       // Replace shutter text with default.
-      shutter.text(shutter_text.ready);
+      //shutter.text(shutter_text.ready);
     });
 }

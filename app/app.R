@@ -1,3 +1,12 @@
+## app-test-save-image-capture
+#save as png
+#do not plot in screen
+#use back camera as default
+#no screenshot
+#javascrip loop inside app.R, not in main.js
+#main.js add shutter attr id, to look for button id
+#get button from mycamera div + button id from shadowDOM
+
 library(shiny)
 library(shinyBS)
 library(imager)
@@ -11,10 +20,10 @@ source('qpcr_func.R')
 
 library(shiny)
 
-if(!require(shinysense)){
-  devtools::install_github("Aciole-David/shinysense")
-  #library(shinysense)
-}
+# if(!require(shinysense)){
+#   devtools::install_github("Aciole-David/shinysense")
+#   #library(shinysense)
+# }
 
 library(shinyscreenshot)
 library(tidyverse)
@@ -24,37 +33,59 @@ if(!require(r2d3)){
   library(r2d3)
 }
 library(xfun)
+library("gridGraphics") #to rotate plots
+#library(shinylogs)
 
-library(shinylogs)
+library(TeachingDemos)
 
 # Define UI for application that draws a histogram
 ui <-  fluidPage(
-  use_tracking(),
-  h3("EasyOmics qLAMP", span("", style = "font-weight: 300"),
-  style = "color: #000000; text-align: center;background-color:#00AD87;padding: 10px"),
-  column(6,p("Timelapse capture and realtime colorimetric quantitative LAMP analysis."),
-         br()),
+  useShinyjs(),
+  #use_tracking(), #needed by shinylogs
+  h5("EasyOmics qLAMP", span("", style = "color:red;font-weight: 200"),
+     style = "color: #000000; text-align: center;background-color:#a476cf;padding: 10px"),
+  column(12,h6("A tool for realtime colorimetric quantitative LAMP analysis from timelapse images of reaction chambers."),
+  ),
   ## Main
   fluidRow( ),
   # Tabs
   tabsetPanel(
     tabPanel('Captures',
-           column(width = 3, h3("Camera"),
-           shinyviewr_UI("myCamera", height = '100%'),
-           numericInput(inputId = "NUMCAP", label = "# of captures", value = 5),
-           numericInput(inputId = "INTECAP", label = "Capture delay [seconds]", value = 1),
-           verbatimTextOutput("status"),
-           actionButton("setconfirm","Confirm changes"),
-           actionButton("resetdefault","Reset to default"),
-           textOutput("answer"),
-    ),
-    column(width = 4, offset = -1,  h3('Last capture'),
-           imageOutput("snapshot", width = 720, height = 480),
-           imageOutput("myImage")
-    )
-             
-             
+             column(width = 6, align="center",
+                    shinyviewr_UI("myCamera", height = '100%'),
+                    #tags$hr(),
+                    splitLayout(
+                      numericInput(inputId="NUMCAP",width = '45%',
+                                   label="Total captures",value=1),
+                      numericInput(inputId="INTECAP",width='45%',
+                                   label="Delay [seconds]",value = 1)
+                    ),
+                    verbatimTextOutput("status"),
+                    splitLayout(
+                      actionButton("setconfirm","Confirm"),
+                      actionButton("resetdefault","Reset"),
+                      actionButton("capture","Capture!")
+                    ),
+                    textOutput("answer"),
+                    #automatic download link
+                    downloadLink("downloadData",label=""),
+                    #automatic download logic
+                    tags$head(tags$script(HTML('
+                             Shiny.addCustomMessageHandler("jsCode",
+                             function(message) {
+                             eval(message.value);
+                             });'
+                    ))),
              ),
+             splitLayout(
+             column(width = 6, offset = 0, align="center",
+                    imageOutput("snapshot", width = 450, height = 600)
+                    #plotOutput("snapshot", width = 600, height = 480)
+                    #uiOutput("snapshot", width = 344, height = 300)
+             ))
+             
+             
+    ),
     ## Select ROI
     tabPanel('Image Processing',
              sidebarLayout(
@@ -62,7 +93,8 @@ ui <-  fluidPage(
                  tags$br(),
                  
                  
-                 fileInput('image1', 'UPLOAD IMAGES', multiple = TRUE),
+                 fileInput('image1', 'UPLOAD IMAGES', multiple = TRUE,
+                           capture='environment'),
                  bsTooltip('image1',
                            'Select and upload the chamber images.',
                            'right', options = list(container = "body")),
@@ -110,10 +142,10 @@ ui <-  fluidPage(
                
                mainPanel(
                  fluidRow(
+                   #plotOutput('empty_plot', width = '30%', height = '150px'),
                    plotOutput('graph_plot', height = "700px"),
                    tableOutput('table2'),
                    tags$br(),
-                   
                    downloadButton("qLAMP.csv", "Save as Calibration Curve")
                  ))))
     
@@ -125,6 +157,7 @@ ui <-  fluidPage(
 
 # Define server
 server <- function(input, output, session) {
+  
   # intiate interactive values
   values <- reactiveValues()
   
@@ -175,8 +208,32 @@ server <- function(input, output, session) {
     req(input$image1)
     par(mfrow=c(2,1))
     rlamp(df = b1(), standardcurve = input$curve, df2 = s1(), dil2 = dil1(), thr_2 = input$thr_1, thr_01 = input$thr_0)
+    #dev.off()
+    #plot(1:10)
+    # TeachingDemos::subplot(
+    #   plot(1:10, col=5, pch='.', cex.axis=0.00001,xaxt='n', yaxt='n')+
+    #     legend("topleft",
+    #        legend =c('Amostras','NC', '#2', '#3', '#4', '#5', '#6', '#7'),
+    #        pch=16, pt.cex=1, cex=1, bty='n',
+    #        col = c('#FFFFFFFF', 'black','#df536b', '#61d04f', '#2297e6', '#28e2e5', '#cd0bbc', '#f5c710')),
+    #   x=grconvertX(c(0.85,1), from='npc'), #position and size
+    #   y=grconvertY(c(0.5,1), from='npc'), #position and size
+    #   type='fig', pars=list( mar=c(0,0,0,0)+0.1) )
     
   })
+  
+  # ## Make dummy legend to curve plot
+  # output$empty_plot <- renderPlot({
+  #   par(mar=c(0,0,0,0))
+  #   plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='ylab',xlab='xlab', xlim=0:1, ylim=0:1)
+  #   legend("topleft",
+  #          legend =c('Amostras','NC', '#2', '#3', '#4', '#5', '#6', '#7'),
+  #          pch=16, pt.cex=1, cex=1, bty='n',
+  #          col = c('#FFFFFFFF', 'black','#df536b', '#61d04f', '#2297e6', '#28e2e5', '#cd0bbc', '#f5c710'))
+  #   mtext("Amostras", at=.05, cex=1)
+  # })
+  
+  
   ## G/R ratio table
   output$table <- renderTable({
     req(input$image1)
@@ -200,37 +257,37 @@ server <- function(input, output, session) {
       write.csv(b1(), file, row.names = FALSE)
     })
   
-reset.default<-function() {  
-    ##set parameters in main.js to default values
-    gsub_file("main.js",
-              "NumeroDeCapturas = .*,","NumeroDeCapturas = 5,")
-    gsub_file("main.js",
-              "IntervaloDeCaptura = .*;","IntervaloDeCaptura = 1000;")
-    }
+  # reset.default<-function() {  
+  #     ##set parameters in main-test-back-camera.js to default values
+  #     gsub_file("main-test-back-camera.js",
+  #               "NumeroDeCapturas = .*,","NumeroDeCapturas = 5,")
+  #     gsub_file("main-test-back-camera.js",
+  #               "IntervaloDeCaptura = .*;","IntervaloDeCaptura = 1000;")
+  #     }
   
   ## update parameters when input change
-reset.vars<-function(){
-    num.cap=({input$NUMCAP})
-    gsub_file("main.js",
-              "NumeroDeCapturas = .*,",paste0("NumeroDeCapturas = ",num.cap,","))
-    inte.cap.i=input$INTECAP #input interval
-    inte.cap=inte.cap.i*1000 #multiply to get input in milisseconds
-    gsub_file("main.js",
-              "IntervaloDeCaptura = .*;",paste0("IntervaloDeCaptura = ",inte.cap,";"))
-  }
+  # reset.vars<-function(){
+  #   num.cap=({input$NUMCAP})
+  #   #     gsub_file("main-test-back-camera.js",
+  #   #               "NumeroDeCapturas = .*,",paste0("NumeroDeCapturas = ",num.cap,","))
+  #   inte.cap.i=input$INTECAP #input interval
+  #   inte.cap=inte.cap.i*1000 #multiply to get input in milisseconds
+  #   #     gsub_file("main-test-back-camera.js",
+  #   #               "IntervaloDeCaptura = .*;",paste0("IntervaloDeCaptura = ",inte.cap,";"))
+  # }
   
   status <- reactiveVal()
   
   out <- eventReactive(input$setconfirm,{
     status("Values updated")
-    reset.vars()
+    #reset.vars()
     #session$reload()
     sprintf(paste0(input$NUMCAP, " captures; ",input$INTECAP," seconds delay"))
     
   })
   
   observeEvent({list(input$NUMCAP,input$INTECAP)},
-               {status("Please confirm parameters and wait \npage load before any capture")})
+               {status("Confirm parameters before any capture")})
   
   output$answer <- renderText({out()})
   output$status <- renderText({status()})
@@ -242,43 +299,71 @@ reset.vars<-function(){
   #server side call of the viewr module
   myCamera <- callModule(
     shinyviewr, "myCamera",
-    output_width = 500, 
-    output_height = 400 )
+    output_width = 450,
+    output_height = 600)
   
   #picture taken
-  output$snapshot <- renderPlot({
-    par(mar = c(0, 0, 0, 0))
-    graphics::plot(x=as.raster(myCamera()))
+  observeEvent(myCamera(), {
+    photo <- myCamera() 
     a=sprintf(format(Sys.time(), '%Y-%m-%d_%H-%M-%S'))
+    capturename=paste("beeromics-capture-",a, sep = "")
+    #png(filename=capturename,
+    #   width = 720, height = 205)
+    #par(mar=c(0,0,0,0))
+    #plot(as.raster(photo)) # plot photo
+    #dev.off()
     
-    ##save to user download folder
-    #screenshot(id = "snapshot", filename =
-    #             paste("beromics-capture-",a, sep = ""),timer = .5)
     
-    ##save to server side folder
-    screenshot(id = "snapshot", filename =
-                 paste("beromics-capture-",a, sep = ""),timer = 1,
-               server_dir = "./", download = T)
-    
+    output$snapshot <- renderPlot({
+      par(mar=c(0,0,0,0))
+      plot(photo)
+      screenshot(id = 'snapshot', filename = capturename,
+                 download = T, server_dir = ".", timer = 1.2)
+    })
+  })  
+  
+  #automatic download
+  # observeEvent(input$my_own_trigger, {
+  #   output$downloadData<<-downloadHandler(filename = capturename,content = function(file)file.copy(file0,file) )
+  #   jsinject <- "setTimeout(function(){window.open($('#downloadData').attr('href'))}, 100);"
+  #   session$sendCustomMessage(type = 'jsCode', list(value = jsinject))    
+  # })
+  
+  
+  observeEvent(input$resetdefault, {
+    #reset.default()
+    updateNumericInput(session, "NUMCAP", value = 5)
+    updateNumericInput(session, "INTECAP", value = 1)
   })
   
-   observeEvent(input$resetdefault, {
-     reset.default()
-     updateNumericInput(session, "NUMCAP", value = 5)
-     updateNumericInput(session, "INTECAP", value = 1)
-   })
   
-   ## SHINYLOGS
-   # Just take a look at what is generated
-   track_usage(what = "error",
-               storage_mode = store_json(path = "logs/"))
-   # track_usage(
-   #   storage_mode = store_custom(FUN = function(logs){
-   #     str(logs, max.level=3)
-   #   })
-   # )
-   
+  #runjs("var today = new Date(); alert(today);")
+  
+  ##simulate click and repeat in a loop
+  simulateclick<-function(){
+    runjs(paste0("console.log('",status(),"'); var confirmation = '",status(),"'; if (confirmation === 'Values updated') { var i = 1; function myLoop() { setTimeout(function() { console.log(\'cheese\'+i); document.getElementById(\'myCamera-shinyviewr\').shadowRoot.querySelector(\'#shutterbutton\').click(); i++; if (i <=",input$NUMCAP,") { myLoop(); } },", input$INTECAP*1000,") } myLoop() } ; "))
+    a=sprintf(format(Sys.time(), '%Y-%m-%d_%H-%M-%S'))
+    captname=paste("beromics-capture-",a, sep = "")
+    
   }
-
+  
+  #simulate click
+  observeEvent(input$capture, {
+    simulateclick()
+    timestamp()
+  })
+  
+  ## SHINYLOGS
+  # Just take a look at what is generated
+  #track_usage(what = "error",
+  #           storage_mode = store_json(path = "logs/"))
+  # track_usage(
+  #   storage_mode = store_custom(FUN = function(logs){
+  #     str(logs, max.level=3)
+  #   })
+  # )
+ 
+  runjs('const myshadowRoot = document.getElementById(\'myCamera-shinyviewr\').shadowRoot;')
+}
 # Run the application
 shinyApp(ui = ui, server = server)
