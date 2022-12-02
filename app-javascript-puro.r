@@ -1,6 +1,9 @@
 #javascript e html de captura embebido no app.r
 #função zoom nativo da camera do aparelho
 #sem distorção de captura
+#compativel apenas com navegadores google chrome devido ao image capture:
+# https://github.com/w3c/mediacapture-image/blob/gh-pages/implementation-status.md
+#no opera nao funciona zoom, mas captura ok
 
 library(shiny)
 library(shinyjs)
